@@ -67,7 +67,18 @@ if not _check_password():
 st.markdown(
     """
     <style>
-      #MainMenu, footer {visibility: hidden;}
+      /* Hide Streamlit chrome: hamburger menu, footer, top decoration,
+         toolbar (Share/GitHub/Fork/Edit), status widget, and the GitHub
+         "viewer" fork badge that Streamlit Cloud injects on public apps. */
+      #MainMenu {display: none !important;}
+      footer {display: none !important;}
+      header[data-testid="stHeader"] {display: none !important;}
+      [data-testid="stToolbar"] {display: none !important;}
+      [data-testid="stDecoration"] {display: none !important;}
+      [data-testid="stStatusWidget"] {display: none !important;}
+      [class*="viewerBadge"] {display: none !important;}
+      a[href*="github.com"][class*="badge"],
+      a[href*="streamlit.io/cloud"] {display: none !important;}
       .block-container {padding-top: 2.2rem; max-width: 820px;}
 
       .hero {
