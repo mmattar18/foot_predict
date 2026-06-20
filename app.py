@@ -1,34 +1,28 @@
-"""Streamlit interface on top of the explainable sports-prediction agent.
+"""Streamlit web app for the explainable football match predictor.
 
 Run with:
     streamlit run app.py
-
-Features:
-- pick the competition + both teams (dynamic selectboxes);
-- "Predict" button;
-- agent reasoning step by step inside collapsible sections;
-- final prediction + bar chart of probabilities (Poisson);
-- mock / real-API toggle in the sidebar (demo possible without an API key);
-- password gate to protect your free-tier API quota.
 """
 
 import os
 
-import altair as alt
-import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-st.set_page_config(page_title="AI Football Predictor", page_icon="⚽", layout="centered")
+st.set_page_config(
+    page_title="AI Football Predictor",
+    page_icon="⚽",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+)
 
 
 # --------------------------------------------------------------------------- #
-# Secrets + password gate                                                     #
+# Secrets + optional password gate                                            #
 # --------------------------------------------------------------------------- #
 
 def _load_secrets_into_env() -> None:
-    """Load secrets: `.env` locally, then `st.secrets` on Streamlit Cloud.
-    A value already present in the environment is not overwritten."""
+    """Load secrets: `.env` locally, then `st.secrets` on Streamlit Cloud."""
     load_dotenv()
     for key in (
         "GROQ_API_KEY", "GROQ_MODEL", "FOOTBALL_DATA_API_KEY",
@@ -45,15 +39,10 @@ def _load_secrets_into_env() -> None:
 
 
 def _check_password() -> bool:
-    """Shared-password gate (APP_PASSWORD). Without a configured password,
-    access is open (handy locally)."""
     expected = os.getenv("APP_PASSWORD")
-    if not expected:
-        return True
-    if st.session_state.get("auth_ok"):
+    if not expected or st.session_state.get("auth_ok"):
         return True
     st.title("🔒 Protected access")
-    st.caption("Private app — enter the password to continue.")
     with st.form("login"):
         pwd = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Enter")
@@ -72,39 +61,52 @@ if not _check_password():
 
 
 # --------------------------------------------------------------------------- #
-# Football-themed styling                                                     #
+# Styling                                                                     #
 # --------------------------------------------------------------------------- #
 
 st.markdown(
     """
     <style>
+      #MainMenu, footer {visibility: hidden;}
+      .block-container {padding-top: 2.2rem; max-width: 820px;}
+
       .hero {
         background:
-          radial-gradient(circle at 50% 120%, rgba(255,255,255,.10) 0 28%, transparent 29%),
-          repeating-linear-gradient(90deg, #1b7a35 0 38px, #15692e 38px 76px);
-        border:1px solid rgba(255,255,255,.18);
-        border-radius:18px; padding:26px 28px; color:#fff; margin-bottom:18px;
-        box-shadow:0 10px 28px rgba(0,0,0,.20);
+          radial-gradient(circle at 50% 135%, rgba(255,255,255,.10) 0 30%, transparent 31%),
+          linear-gradient(135deg, #0e5c2f 0%, #14803f 55%, #0b4a26 100%);
+        border-radius:20px; padding:30px 30px 26px; color:#fff;
+        box-shadow:0 14px 34px rgba(6,60,28,.30); margin-bottom:22px;
       }
-      .hero h1 { margin:0; font-size:2.05rem; letter-spacing:.3px; }
-      .hero p  { margin:.35rem 0 0; opacity:.92; font-size:.98rem; }
-      .matchup { display:flex; align-items:center; justify-content:center;
-                 gap:14px; margin:6px 0 2px; }
-      .team-chip { background:#0e1117; color:#fff; border:1px solid #2e7d32;
-                   border-radius:999px; padding:8px 16px; font-weight:600; }
-      .vs-badge { background:#f9a825; color:#1b1b1b; font-weight:800;
-                  border-radius:999px; padding:6px 12px; box-shadow:0 2px 8px rgba(0,0,0,.25); }
-      .prob-row { display:flex; gap:12px; margin:6px 0 4px; }
-      .prob-card { flex:1; border-radius:14px; padding:14px 10px; text-align:center;
-                   color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.18); }
-      .prob-card.home { background:linear-gradient(160deg,#2e9e4b,#1b7a35); }
-      .prob-card.draw { background:linear-gradient(160deg,#b9902b,#8a6d1f); }
-      .prob-card.away { background:linear-gradient(160deg,#d4574f,#a8302a); }
-      .prob-card .lbl { font-size:.85rem; opacity:.95; }
-      .prob-card .val { font-size:1.7rem; font-weight:800; line-height:1.2; }
+      .hero h1 {margin:0; font-size:2.15rem; font-weight:800; letter-spacing:.2px;}
+      .hero p {margin:.45rem 0 0; opacity:.9; font-size:1rem; font-weight:400;}
+
+      .scorecard {
+        background:#ffffff; border:1px solid #e7eae7; border-radius:18px;
+        padding:22px 24px; text-align:center; box-shadow:0 8px 22px rgba(0,0,0,.07);
+        margin:6px 0 14px;
+      }
+      .scorecard .teams {display:flex; align-items:center; justify-content:center;
+        gap:18px; font-size:1.15rem; font-weight:700; color:#16181d;}
+      .scorecard .score {font-size:2.3rem; font-weight:800; color:#0e5c2f;
+        background:#eef6ef; border-radius:12px; padding:4px 16px; min-width:96px;}
+      .scorecard .verdict {margin-top:12px; font-size:1.02rem; color:#3a3f44;}
+      .scorecard .verdict b {color:#0e5c2f;}
+
+      .prob-row {display:flex; gap:12px; margin:2px 0 6px;}
+      .prob-card {flex:1; border-radius:14px; padding:13px 8px; text-align:center;
+        color:#fff; box-shadow:0 4px 12px rgba(0,0,0,.12);}
+      .prob-card.home {background:linear-gradient(160deg,#27a14e,#157a37);}
+      .prob-card.draw {background:linear-gradient(160deg,#c79a2c,#937019);}
+      .prob-card.away {background:linear-gradient(160deg,#d6554d,#a82e28);}
+      .prob-card .lbl {font-size:.8rem; opacity:.95; font-weight:500;}
+      .prob-card .val {font-size:1.65rem; font-weight:800; line-height:1.25;}
+
       div.stButton > button[kind="primary"] {
-        background:#2e7d32; border:0; font-weight:700; border-radius:10px; }
-      div.stButton > button[kind="primary"]:hover { background:#1b5e20; }
+        background:#0e5c2f; border:0; font-weight:700; border-radius:11px;
+        padding:.6rem 0; font-size:1.02rem;}
+      div.stButton > button[kind="primary"]:hover {background:#0a4322;}
+      .analysis {background:#fbfcfb; border:1px solid #eceeec; border-radius:14px;
+        padding:6px 20px 12px;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -112,26 +114,19 @@ st.markdown(
 
 
 # --------------------------------------------------------------------------- #
-# Sidebar: data source                                                        #
+# Sidebar (minimal settings)                                                  #
 # --------------------------------------------------------------------------- #
 
-st.sidebar.title("⚙️ Settings")
-
-if os.getenv("APP_PASSWORD") and st.session_state.get("auth_ok"):
-    if st.sidebar.button("🔓 Log out"):
-        st.session_state["auth_ok"] = False
-        st.rerun()
-
 has_fd_key = bool(os.getenv("FOOTBALL_DATA_API_KEY", "").strip())
-default_mode = 0 if has_fd_key else 1
+
+st.sidebar.header("Settings")
 mode = st.sidebar.radio(
-    "Data source",
-    ["🌍 Real API (football-data.org)", "🧪 Mock (demo, no API key)"],
-    index=default_mode,
-    help="Mock mode works offline with fictional teams.",
+    "Data",
+    ["Live data", "Demo (offline)"],
+    index=0 if has_fd_key else 1,
+    help="Live data uses real clubs and national teams via football-data.org.",
 )
-USE_MOCK = mode.startswith("🧪")
-# get_provider() reads DATA_SOURCE on every call: we set it from the choice.
+USE_MOCK = mode.startswith("Demo")
 os.environ["DATA_SOURCE"] = "mock" if USE_MOCK else "football-data"
 
 # Project imports read the environment at call time (not at import): OK here.
@@ -142,23 +137,32 @@ from tools.providers import get_provider  # noqa: E402
 from tools.utils import known_teams  # noqa: E402
 
 has_groq_key = bool(os.getenv("GROQ_API_KEY", "").strip())
-if has_groq_key:
-    st.sidebar.success(f"LLM: {DEFAULT_MODEL}")
-else:
-    st.sidebar.error("GROQ_API_KEY missing in secrets — prediction will fail.")
-st.sidebar.caption(
-    "football-data.org "
-    + ("✅ key detected" if has_fd_key else "❌ no key (use mock mode)")
-)
+DAILY_LIMIT = int(os.getenv("DAILY_PREDICTION_LIMIT", "50"))
 
-TOOL_ICONS = {
-    "get_team_stats": "📊",
-    "get_head_to_head": "🤝",
-    "get_injuries": "🏥",
-    "search_team_news": "📰",
-    "get_upcoming_matches": "📅",
-    "estimate_match_probabilities": "🎲",
-}
+
+@st.cache_resource
+def _usage_counter() -> dict:
+    return {"date": None, "count": 0}
+
+
+def _quota_left() -> int:
+    import datetime
+
+    today = datetime.date.today().isoformat()
+    c = _usage_counter()
+    if c["date"] != today:
+        c["date"], c["count"] = today, 0
+    return DAILY_LIMIT - c["count"] if DAILY_LIMIT > 0 else 10**9
+
+
+st.sidebar.caption(f"Model: {DEFAULT_MODEL}")
+if DAILY_LIMIT > 0:
+    st.sidebar.caption(f"Predictions left today: {max(_quota_left(), 0)} / {DAILY_LIMIT}")
+st.sidebar.markdown("---")
+st.sidebar.caption(
+    "Explainable predictions: recent form, head-to-head, injuries & news, "
+    "schedule, and a Poisson model — with transparent reasoning."
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -171,7 +175,6 @@ def cached_list_teams(competition: str) -> list[str]:
 
 
 def poisson_chart_data(team_a: str, team_b: str):
-    """Probabilities 1/X/2 computed directly (independent of the LLM)."""
     provider = get_provider()
     home = provider.goal_averages(team_a)
     away = provider.goal_averages(team_b)
@@ -182,7 +185,6 @@ def poisson_chart_data(team_a: str, team_b: str):
 
 
 def run_prediction(team_a: str, team_b: str):
-    """Run the agent and collect the steps + final answer."""
     agent = build_agent()
     query = build_query(team_a, team_b)
     call_args: dict[str, tuple] = {}
@@ -206,58 +208,32 @@ def run_prediction(team_a: str, team_b: str):
     return steps, final
 
 
-# --- Usage cap (no password needed) ---------------------------------------
-# Caps the number of *real* API-backed predictions per day, and caches results
-# so the same matchup never re-calls the APIs. 0 = unlimited.
-DAILY_LIMIT = int(os.getenv("DAILY_PREDICTION_LIMIT", "50"))
-
-
-@st.cache_resource
-def _usage_counter() -> dict:
-    """Shared across sessions for one app instance (resets on restart)."""
-    return {"date": None, "count": 0}
-
-
-def _quota_left() -> int:
-    import datetime
-
-    today = datetime.date.today().isoformat()
-    c = _usage_counter()
-    if c["date"] != today:
-        c["date"], c["count"] = today, 0
-    return DAILY_LIMIT - c["count"] if DAILY_LIMIT > 0 else 10**9
-
-
 @st.cache_data(show_spinner=False, ttl=3600)
 def cached_prediction(team_a: str, team_b: str, source: str):
-    """Cached by matchup+source. Its body runs only on a cache MISS, i.e. a
-    real API call — so that is where we increment the daily counter."""
     c = _usage_counter()
     c["count"] = c.get("count", 0) + 1
     return run_prediction(team_a, team_b)
 
 
 # --------------------------------------------------------------------------- #
-# Header                                                                       #
+# Header + inputs                                                             #
 # --------------------------------------------------------------------------- #
 
 st.markdown(
     """
     <div class="hero">
-      <h1>⚽ AI Football Match Predictor</h1>
-      <p>Explainable predictions: the agent blends stats, head-to-head, schedule
-      and a Poisson model — then walks you through its reasoning step by step.</p>
+      <h1>⚽ AI Football Predictor</h1>
+      <p>Pick a match and get a data-driven prediction — with the reasoning behind it.</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 if USE_MOCK:
-    st.info("**Demo mode (mock)**: fictional teams, no connection required.")
     teams = known_teams()
 else:
     comp = st.selectbox(
-        "🏆 Competition",
+        "Competition",
         options=list(fd.COMPETITION_NAMES),
         format_func=lambda c: fd.COMPETITION_NAMES[c],
     )
@@ -271,102 +247,83 @@ if len(teams) < 2:
     st.warning("Not enough teams available.")
     st.stop()
 
-col_a, col_vs, col_b = st.columns([5, 1, 5])
-team_a = col_a.selectbox("🏠 Team A (home)", teams, index=0)
-col_vs.markdown("<div style='text-align:center;padding-top:32px;'><span class='vs-badge'>VS</span></div>", unsafe_allow_html=True)
-team_b = col_b.selectbox("✈️ Team B (away)", teams, index=1)
-
-st.markdown(
-    f"<div class='matchup'><span class='team-chip'>🏠 {team_a}</span>"
-    f"<span class='vs-badge'>VS</span>"
-    f"<span class='team-chip'>✈️ {team_b}</span></div>",
-    unsafe_allow_html=True,
-)
+col_a, col_b = st.columns(2)
+team_a = col_a.selectbox("Home team", teams, index=0)
+team_b = col_b.selectbox("Away team", teams, index=1)
 
 same_team = team_a == team_b
 if same_team:
     st.warning("Pick two different teams.")
+if not has_groq_key:
+    st.error("The prediction engine is not configured (missing GROQ_API_KEY).")
 
 predict = st.button(
-    "🔮 Predict", type="primary", use_container_width=True,
+    "Predict result", type="primary", use_container_width=True,
     disabled=same_team or not has_groq_key,
 )
-if DAILY_LIMIT > 0:
-    st.caption(f"🎟️ Predictions left today: {max(_quota_left(), 0)} / {DAILY_LIMIT} "
-               "(repeating the same matchup is free — cached).")
+
+
+# --------------------------------------------------------------------------- #
+# Result                                                                       #
+# --------------------------------------------------------------------------- #
 
 if predict:
     if _quota_left() <= 0:
-        st.error(
-            f"Daily limit reached ({DAILY_LIMIT} predictions) to protect API "
-            "quota. Try again tomorrow, or rerun a matchup you already requested "
-            "(those are cached and free)."
-        )
+        st.error(f"Daily limit reached ({DAILY_LIMIT}). Try again tomorrow.")
         st.stop()
     try:
-        with st.spinner("The agent is consulting its tools and reasoning…"):
+        with st.spinner("Analyzing the match…"):
             steps, final = cached_prediction(team_a, team_b, os.environ["DATA_SOURCE"])
     except Exception as exc:  # noqa: BLE001
-        st.error(f"Error while running the agent: {exc}")
+        st.error(f"Something went wrong: {exc}")
         st.stop()
-
-    # --- Final prediction + chart (shown first for impact) -----------------
-    st.subheader("🏆 Final prediction")
 
     data = poisson_chart_data(team_a, team_b)
     if data:
         r, lam_home, lam_away = data
+        outcomes = [
+            (r["p_home"], f"{team_a} win"),
+            (r["p_draw"], "a draw"),
+            (r["p_away"], f"{team_b} win"),
+        ]
+        conf, verdict = max(outcomes, key=lambda x: x[0])
+        h, a = r["best_score"]
+
         st.markdown(
-            f"<div class='prob-row'>"
-            f"<div class='prob-card home'><div class='lbl'>🏠 {team_a} win</div>"
-            f"<div class='val'>{r['p_home']:.0%}</div></div>"
-            f"<div class='prob-card draw'><div class='lbl'>🤝 Draw</div>"
-            f"<div class='val'>{r['p_draw']:.0%}</div></div>"
-            f"<div class='prob-card away'><div class='lbl'>✈️ {team_b} win</div>"
-            f"<div class='val'>{r['p_away']:.0%}</div></div>"
-            f"</div>",
+            f"""
+            <div class="scorecard">
+              <div class="teams"><span>{team_a}</span>
+                <span class="score">{h} – {a}</span><span>{team_b}</span></div>
+              <div class="verdict">Most likely: <b>{verdict}</b>
+                &nbsp;·&nbsp; {conf:.0%} confidence</div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
-
-        chart_df = pd.DataFrame(
-            {
-                "Outcome": [f"{team_a} win", "Draw", f"{team_b} win"],
-                "Probability": [r["p_home"], r["p_draw"], r["p_away"]],
-                "Color": ["#2e9e4b", "#b9902b", "#d4574f"],
-            }
+        st.markdown(
+            f"""
+            <div class="prob-row">
+              <div class="prob-card home"><div class="lbl">{team_a}</div>
+                <div class="val">{r['p_home']:.0%}</div></div>
+              <div class="prob-card draw"><div class="lbl">Draw</div>
+                <div class="val">{r['p_draw']:.0%}</div></div>
+              <div class="prob-card away"><div class="lbl">{team_b}</div>
+                <div class="val">{r['p_away']:.0%}</div></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-        bar = (
-            alt.Chart(chart_df)
-            .mark_bar(cornerRadiusEnd=7, height=34)
-            .encode(
-                x=alt.X("Probability:Q", axis=alt.Axis(format="%"),
-                        scale=alt.Scale(domain=[0, 1]), title=None),
-                y=alt.Y("Outcome:N", sort=None, title=None),
-                color=alt.Color("Color:N", scale=None, legend=None),
-                tooltip=[alt.Tooltip("Outcome:N"),
-                         alt.Tooltip("Probability:Q", format=".0%")],
-            )
-            .properties(height=170)
-        )
-        st.altair_chart(bar, use_container_width=True)
         st.caption(
-            f"🎲 Poisson model — most likely score: "
-            f"**{r['best_score'][0]}-{r['best_score'][1]}** · "
-            f"expected goals: {team_a} {lam_home:.2f} / {team_b} {lam_away:.2f}"
+            f"Expected goals: {team_a} {lam_home:.2f} · {team_b} {lam_away:.2f} "
+            "— Poisson model."
         )
-    else:
-        st.caption("Poisson probabilities unavailable (missing goal data).")
 
-    # --- Agent's written analysis ------------------------------------------
     if final:
-        st.markdown("#### 📝 Agent analysis")
+        st.subheader("Match analysis")
         st.markdown(final)
 
-    # --- Step-by-step reasoning (collapsible) ------------------------------
-    st.subheader("🧠 Step-by-step reasoning (tool by tool)")
-    for s in steps:
-        icon = TOOL_ICONS.get(s["name"], "🔧")
-        arg_str = ", ".join(f"{k}={v}" for k, v in s["args"].items())
-        label = f"{icon} {s['name']}({arg_str})"
-        with st.expander(label, expanded=s["name"] == "estimate_match_probabilities"):
-            st.text(s["content"])
+    if steps:
+        with st.expander("How the prediction was made (data & sources)"):
+            for s in steps:
+                st.markdown(f"**{s['name']}**")
+                st.text(s["content"])
