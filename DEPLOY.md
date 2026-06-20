@@ -1,97 +1,93 @@
-# 🚀 Déploiement gratuit (Streamlit Community Cloud)
+# 🚀 Free deployment (Streamlit Community Cloud)
 
-Objectif : mettre l'app en ligne **sans dépenser un centime**, avec un **mot de
-passe** qui empêche des inconnus de consommer ton quota d'API gratuites.
+Goal: put the app online **without spending a cent**, with a **password** that
+prevents strangers from burning your free-tier API quota.
 
-Coût total : **0 €** tant que tu restes dans les tiers gratuits
+Total cost: **$0** as long as you stay within the free tiers
 (Streamlit Community Cloud + Groq + football-data.org).
 
 ---
 
-## 🔐 Comment les clés sont protégées
+## 🔐 How the keys are protected
 
-- Aucune clé n'est dans le code ni sur GitHub : `.env` et
-  `.streamlit/secrets.toml` sont **ignorés par git** (voir `.gitignore`).
-- En ligne, les clés vivent dans le **gestionnaire de secrets de Streamlit
-  Cloud** (chiffré), injectées via `st.secrets`.
-- L'app est protégée par un **mot de passe** (`APP_PASSWORD`). Sans lui,
-  impossible de lancer une prédiction → ton quota Groq/football-data est à
-  l'abri des abus.
+- No key lives in the code or on GitHub: `.env` and
+  `.streamlit/secrets.toml` are **git-ignored** (see `.gitignore`).
+- Online, the keys live in **Streamlit Cloud's secret manager** (encrypted),
+  injected via `st.secrets`.
+- The app is protected by a **password** (`APP_PASSWORD`). Without it, no
+  prediction can run → your Groq/football-data quota is safe from abuse.
 
 ---
 
-## Étape 1 — Mettre le code sur GitHub
+## Step 1 — Put the code on GitHub
 
-Le dépôt git local est déjà initialisé et committé. Il te reste à le pousser
-sur **ton** compte GitHub.
+The local git repo is already initialized and committed. You just need to push
+it to **your** GitHub account.
 
-### Option A — avec le CLI GitHub (`gh`)
+### Option A — with the GitHub CLI (`gh`)
 ```bash
 cd sports-predictor-agent
 gh repo create sports-predictor-agent --private --source=. --push
 ```
 
-### Option B — à la main
-1. Crée un dépôt vide sur https://github.com/new (privé de préférence).
-2. Puis :
+### Option B — manually
+1. Create an empty repo at https://github.com/new (private recommended).
+2. Then:
    ```bash
    cd sports-predictor-agent
-   git remote add origin https://github.com/<ton-pseudo>/sports-predictor-agent.git
    git branch -M main
+   git remote add origin https://github.com/<your-username>/sports-predictor-agent.git
    git push -u origin main
    ```
 
-> ✅ Vérifie sur GitHub que **`.env` n'apparaît PAS** dans les fichiers. (Il ne
-> doit pas y être.)
+> ✅ Check on GitHub that **`.env` does NOT appear** in the files. (It must not.)
 
 ---
 
-## Étape 2 — Déployer sur Streamlit Community Cloud
+## Step 2 — Deploy on Streamlit Community Cloud
 
-1. Va sur **https://share.streamlit.io** et connecte-toi avec GitHub (gratuit).
-2. Clique **« Create app »** → **« Deploy a public/ private app from GitHub »**.
-3. Renseigne :
-   - **Repository** : `<ton-pseudo>/sports-predictor-agent`
-   - **Branch** : `main`
-   - **Main file path** : `app.py`
-4. Ouvre **« Advanced settings » → « Secrets »** et colle (en adaptant les
-   valeurs) le contenu de `.streamlit/secrets.toml.example` :
+1. Go to **https://share.streamlit.io** and sign in with GitHub (free).
+2. Click **“Create app”** → **“Deploy a public/private app from GitHub”**.
+3. Fill in:
+   - **Repository**: `<your-username>/sports-predictor-agent`
+   - **Branch**: `main`
+   - **Main file path**: `app.py`
+4. Open **“Advanced settings” → “Secrets”** and paste (adapting the values) the
+   contents of `.streamlit/secrets.toml.example`:
    ```toml
-   APP_PASSWORD = "ton-mot-de-passe"
+   APP_PASSWORD = "your-password"
    GROQ_API_KEY = "gsk_..."
    GROQ_MODEL = "llama-3.1-8b-instant"
    FOOTBALL_DATA_API_KEY = "..."
    FOOTBALL_DATA_COMPETITIONS = "WC,PL,PD,SA,BL1,FL1,DED,PPL,ELC"
    ```
-5. Clique **« Deploy »**. Au bout de quelques minutes, l'app est en ligne sur
-   une URL `https://<ton-app>.streamlit.app`.
+5. Click **“Deploy”**. After a few minutes, the app is live at a
+   `https://<your-app>.streamlit.app` URL.
 
-À l'ouverture, l'app demande le **mot de passe** avant toute prédiction. 🎉
-
----
-
-## Notes & limites du gratuit
-
-- **Groq** : tier gratuit avec limites de requêtes/minute — largement suffisant
-  pour une démo perso protégée par mot de passe.
-- **football-data.org** : ~10 req/min, sous-ensemble de compétitions. Les
-  réponses sont mises en cache (`.cache/`) pour limiter les appels. *(Sur le
-  cloud, ce cache est éphémère et se reconstruit après chaque redémarrage —
-  sans surcoût.)*
-- **Mode démo** : si tu ne renseignes **pas** `FOOTBALL_DATA_API_KEY`, l'app
-  démarre en mode **mock** (équipes fictives) — utile pour montrer l'app sans
-  exposer de clé. `GROQ_API_KEY` reste nécessaire pour le raisonnement du LLM.
-- **Mettre à jour l'app** : un simple `git push` sur `main` redéploie
-  automatiquement.
+On open, the app asks for the **password** before any prediction. 🎉
 
 ---
 
-## Rappel sécurité
+## Notes & free-tier limits
 
-Tes clés Groq et football-data ont transité en clair pendant le développement.
-Avant une mise en ligne publique, pense à les **régénérer** :
-- Groq : https://console.groq.com/keys
-- football-data.org : espace client → regénérer le token
+- **Groq**: free tier with per-minute request limits — plenty for a personal,
+  password-protected demo.
+- **football-data.org**: ~10 req/min, a subset of competitions. Responses are
+  cached (`.cache/`) to limit calls. *(On the cloud this cache is ephemeral and
+  rebuilds after each restart — at no extra cost.)*
+- **Demo mode**: if you do **not** set `FOOTBALL_DATA_API_KEY`, the app starts
+  in **mock** mode (fictional teams) — useful to show the app without exposing
+  a key. `GROQ_API_KEY` is still required for the LLM reasoning.
+- **Update the app**: a simple `git push` to `main` redeploys automatically.
 
-Puis mets les nouvelles valeurs **uniquement** dans les secrets Streamlit Cloud
-(et ton `.env` local), jamais dans le code.
+---
+
+## Security reminder
+
+Your Groq and football-data keys were shared in plain text during development.
+Before going public, **regenerate them**:
+- Groq: https://console.groq.com/keys
+- football-data.org: client area → regenerate the token
+
+Then put the new values **only** in Streamlit Cloud secrets (and your local
+`.env`), never in the code.
