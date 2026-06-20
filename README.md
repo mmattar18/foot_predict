@@ -228,9 +228,10 @@ What the API provides (via `tools/football_data.py`):
 > window (`dateFrom`/`dateTo`), so form, head-to-head and the Poisson model
 > stay available even when the new league season has not started yet.
 >
-> ℹ️ football-data.org provides **neither injuries nor news**: those two tools
-> stay in mock mode (the real provider explicitly flags the missing data to the
-> agent, which weights it accordingly).
+> ℹ️ football-data.org provides **neither injuries nor news**. In real-API mode
+> those two tools fall back to a **free web search** (`tools/web_search.py`):
+> **DuckDuckGo** by default (no key), or **Tavily** automatically if you set a
+> free `TAVILY_API_KEY` (more reliable on the cloud).
 
 The architecture is **decoupled**: to add another source (API-Football, etc.),
 just write a new provider in `tools/providers.py` — the tools and the agent stay

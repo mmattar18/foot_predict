@@ -33,6 +33,7 @@ def _load_secrets_into_env() -> None:
     for key in (
         "GROQ_API_KEY", "GROQ_MODEL", "FOOTBALL_DATA_API_KEY",
         "FOOTBALL_DATA_COMPETITIONS", "APP_PASSWORD", "DAILY_PREDICTION_LIMIT",
+        "TAVILY_API_KEY",
     ):
         if not os.getenv(key):
             try:

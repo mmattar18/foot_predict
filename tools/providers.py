@@ -19,6 +19,7 @@ import os
 from tools import football_data as fd
 from tools.utils import find_team as find_mock_team
 from tools.utils import known_teams, load_data
+from tools.web_search import web_search
 
 _FORM_LABEL = {"W": "Win", "D": "Draw", "L": "Loss"}
 
@@ -226,17 +227,22 @@ class FootballDataProvider:
         )
 
     def injuries(self, team_name: str) -> str:
-        return (
-            "Not available: the football-data.org API (free tier) does not provide "
-            "injuries/absences. Treat this as missing data, or plug in another "
-            "source."
-        )
+        out = web_search(f"{team_name} football injury news squad availability")
+        if not out:
+            return (
+                f"No injury info found for {team_name}. (football-data.org does not "
+                "provide injuries; web search returned nothing or is not installed.)"
+            )
+        return f"Web search — injuries/absences for {team_name}:\n{out}"
 
     def news(self, team_name: str) -> str:
-        return (
-            "Not available: the football-data.org API does not provide qualitative "
-            "news. Plug in a real web search (Tavily/SerpAPI) if needed."
-        )
+        out = web_search(f"{team_name} football team latest news form morale")
+        if not out:
+            return (
+                f"No recent news found for {team_name}. (football-data.org does not "
+                "provide news; web search returned nothing or is not installed.)"
+            )
+        return f"Web search — recent news on {team_name}:\n{out}"
 
     def upcoming(self, team_name: str) -> str:
         try:
