@@ -1,0 +1,115 @@
+{
+  "teams": {
+    "Lyon Dragons": {
+      "league_position": 2,
+      "form_last_5": ["W", "W", "D", "L", "W"],
+      "goals_scored_last_5": 11,
+      "goals_conceded_last_5": 5,
+      "home_strength": 0.82,
+      "away_strength": 0.58,
+      "injuries": [
+        {"player": "K. Diallo", "position": "Forward", "status": "Out", "importance": "key", "reason": "Hamstring injury"},
+        {"player": "L. Moreau", "position": "Midfielder", "status": "Doubtful", "importance": "rotation", "reason": "Returning from flu"}
+      ],
+      "news": [
+        "Head coach Bernard Faure said the team is 'at the peak of its confidence' after three home wins.",
+        "The captain is back from suspension and will start the match.",
+        "The absence of star forward K. Diallo worries fans ahead of this important game."
+      ]
+    },
+    "Marseille Tigers": {
+      "league_position": 1,
+      "form_last_5": ["W", "W", "W", "D", "W"],
+      "goals_scored_last_5": 14,
+      "goals_conceded_last_5": 3,
+      "home_strength": 0.88,
+      "away_strength": 0.71,
+      "injuries": [
+        {"player": "A. Santos", "position": "Defender", "status": "Doubtful", "importance": "rotation", "reason": "Ankle knock"}
+      ],
+      "news": [
+        "The Tigers are on an 8-game unbeaten run and look completely serene.",
+        "The coach rotated the squad in the cup to rest key starters.",
+        "Morale is high and the team is targeting top spot in the league."
+      ]
+    },
+    "Paris Eagles": {
+      "league_position": 4,
+      "form_last_5": ["L", "D", "W", "L", "D"],
+      "goals_scored_last_5": 6,
+      "goals_conceded_last_5": 8,
+      "home_strength": 0.65,
+      "away_strength": 0.42,
+      "injuries": [
+        {"player": "T. Bernard", "position": "Goalkeeper", "status": "Out", "importance": "key", "reason": "Knee surgery"},
+        {"player": "M. Lefevre", "position": "Center-back", "status": "Out", "importance": "key", "reason": "Red card (suspended)"}
+      ],
+      "news": [
+        "The team is going through a rough patch, with the first-choice goalkeeper out for several weeks.",
+        "The press reported internal tension between the coach and some senior players.",
+        "The club is looking for a reaction after a difficult month."
+      ]
+    },
+    "Bordeaux Wolves": {
+      "league_position": 3,
+      "form_last_5": ["W", "D", "W", "W", "D"],
+      "goals_scored_last_5": 9,
+      "goals_conceded_last_5": 6,
+      "home_strength": 0.74,
+      "away_strength": 0.60,
+      "injuries": [],
+      "news": [
+        "No major absences to report, the squad is fully fit.",
+        "The Wolves are gathering momentum and have not lost in five rounds.",
+        "The young academy midfielder keeps putting in eye-catching performances."
+      ]
+    },
+    "Rennes Falcons": {
+      "league_position": 7,
+      "form_last_5": ["L", "L", "D", "W", "L"],
+      "goals_scored_last_5": 5,
+      "goals_conceded_last_5": 11,
+      "home_strength": 0.55,
+      "away_strength": 0.38,
+      "injuries": [
+        {"player": "R. Petit", "position": "Defensive midfielder", "status": "Doubtful", "importance": "key", "reason": "Calf strain"},
+        {"player": "S. Garnier", "position": "Winger", "status": "Out", "importance": "rotation", "reason": "Sprain"}
+      ],
+      "news": [
+        "A tough season for the Falcons, who are fighting against relegation.",
+        "The defense is the weak spot, with 11 goals conceded in the last 5 games.",
+        "The coach stays optimistic but admits 'there is a huge amount of work to do'."
+      ]
+    }
+  },
+  "head_to_head": [
+    {"date": "2025-02-14", "home": "Lyon Dragons", "away": "Marseille Tigers", "score": "1-2"},
+    {"date": "2024-09-21", "home": "Marseille Tigers", "away": "Lyon Dragons", "score": "3-1"},
+    {"date": "2024-03-10", "home": "Lyon Dragons", "away": "Marseille Tigers", "score": "2-2"},
+    {"date": "2023-11-05", "home": "Marseille Tigers", "away": "Lyon Dragons", "score": "1-0"},
+
+    {"date": "2025-01-18", "home": "Paris Eagles", "away": "Lyon Dragons", "score": "0-2"},
+    {"date": "2024-08-30", "home": "Lyon Dragons", "away": "Paris Eagles", "score": "3-1"},
+    {"date": "2024-02-22", "home": "Paris Eagles", "away": "Lyon Dragons", "score": "1-1"},
+
+    {"date": "2025-03-02", "home": "Bordeaux Wolves", "away": "Rennes Falcons", "score": "2-0"},
+    {"date": "2024-10-12", "home": "Rennes Falcons", "away": "Bordeaux Wolves", "score": "1-1"},
+    {"date": "2024-04-07", "home": "Bordeaux Wolves", "away": "Rennes Falcons", "score": "3-1"},
+
+    {"date": "2025-02-28", "home": "Marseille Tigers", "away": "Paris Eagles", "score": "4-0"},
+    {"date": "2024-09-14", "home": "Paris Eagles", "away": "Marseille Tigers", "score": "0-1"},
+
+    {"date": "2025-01-25", "home": "Lyon Dragons", "away": "Bordeaux Wolves", "score": "2-1"},
+    {"date": "2024-08-23", "home": "Bordeaux Wolves", "away": "Lyon Dragons", "score": "1-1"},
+
+    {"date": "2025-03-15", "home": "Rennes Falcons", "away": "Paris Eagles", "score": "1-2"},
+    {"date": "2024-10-05", "home": "Paris Eagles", "away": "Rennes Falcons", "score": "2-2"}
+  ],
+  "upcoming": [
+    {"date": "2025-04-12", "home": "Lyon Dragons", "away": "Marseille Tigers", "competition": "League"},
+    {"date": "2025-04-19", "home": "Paris Eagles", "away": "Lyon Dragons", "competition": "League"},
+    {"date": "2025-04-13", "home": "Bordeaux Wolves", "away": "Rennes Falcons", "competition": "League"},
+    {"date": "2025-04-20", "home": "Marseille Tigers", "away": "Bordeaux Wolves", "competition": "League"},
+    {"date": "2025-04-26", "home": "Rennes Falcons", "away": "Paris Eagles", "competition": "Cup"}
+  ]
+}

@@ -1,0 +1,7 @@
+# Configuration Streamlit (committable, sans secret).
+[theme]
+primaryColor = "#4C9BE8"
+base = "light"
+
+[browser]
+gatherUsageStats = false
