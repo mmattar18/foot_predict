@@ -14,20 +14,38 @@ from langchain_core.tools import tool
 
 from tools.providers import get_provider
 
-HOME_ADVANTAGE = 1.15   # bonus offensif à domicile
-AWAY_FACTOR = 0.95      # léger malus à l'extérieur
-MAX_GOALS = 8           # grille de scores 0..8 (la queue au-delà est négligeable)
+HOME_ADVANTAGE = 1.15   # offensive bonus at home
+AWAY_FACTOR = 0.95      # slight away penalty
+MAX_GOALS = 8           # score grid 0..8 (the tail beyond is negligible)
+
+# Shrinkage (regression to the mean): with few matches, a team's averages are
+# pulled toward a neutral baseline so one lucky game can't make it look
+# unbeatable. PRIOR_GOALS = typical goals per team per game; PRIOR_STRENGTH =
+# how many "average" matches of prior to mix in.
+PRIOR_GOALS = 1.3
+PRIOR_STRENGTH = 2.5
 
 
 def _poisson_pmf(k: int, lam: float) -> float:
     return math.exp(-lam) * lam**k / math.factorial(k)
 
 
+def _shrink(avg: float, n: int) -> float:
+    """Pull a per-game average toward PRIOR_GOALS based on sample size n."""
+    return (avg * n + PRIOR_GOALS * PRIOR_STRENGTH) / (n + PRIOR_STRENGTH)
+
+
 def _lambdas(home: dict, away: dict) -> tuple[float, float]:
-    """Estime les buts attendus (lambda) de chaque équipe."""
-    lam_home = (home["avg_scored"] + away["avg_conceded"]) / 2 * HOME_ADVANTAGE
-    lam_away = (away["avg_scored"] + home["avg_conceded"]) / 2 * AWAY_FACTOR
-    # garde-fous pour éviter lambda = 0 (probabilités dégénérées)
+    """Estimate each team's expected goals (lambda), with sample-size shrinkage."""
+    nh = home.get("matches_used", 5)
+    na = away.get("matches_used", 5)
+    h_scored = _shrink(home["avg_scored"], nh)
+    h_conceded = _shrink(home["avg_conceded"], nh)
+    a_scored = _shrink(away["avg_scored"], na)
+    a_conceded = _shrink(away["avg_conceded"], na)
+    lam_home = (h_scored + a_conceded) / 2 * HOME_ADVANTAGE
+    lam_away = (a_scored + h_conceded) / 2 * AWAY_FACTOR
+    # guard against lambda = 0 (degenerate probabilities)
     return max(lam_home, 0.2), max(lam_away, 0.2)
 
 

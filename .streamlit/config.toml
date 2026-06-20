@@ -1,7 +1,13 @@
-# Configuration Streamlit (committable, sans secret).
+# Streamlit configuration (committable, no secrets).
 [theme]
-primaryColor = "#4C9BE8"
+primaryColor = "#0e5c2f"
 base = "light"
+
+[client]
+# Hide the developer toolbar (GitHub / fork / source links) for an app-like feel.
+toolbarMode = "minimal"
+# Don't show raw tracebacks to end users.
+showErrorDetails = false
 
 [browser]
 gatherUsageStats = false
