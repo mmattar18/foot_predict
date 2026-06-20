@@ -32,7 +32,7 @@ def _load_secrets_into_env() -> None:
     load_dotenv()
     for key in (
         "GROQ_API_KEY", "GROQ_MODEL", "FOOTBALL_DATA_API_KEY",
-        "FOOTBALL_DATA_COMPETITIONS", "APP_PASSWORD",
+        "FOOTBALL_DATA_COMPETITIONS", "APP_PASSWORD", "DAILY_PREDICTION_LIMIT",
     ):
         if not os.getenv(key):
             try:
@@ -205,6 +205,37 @@ def run_prediction(team_a: str, team_b: str):
     return steps, final
 
 
+# --- Usage cap (no password needed) ---------------------------------------
+# Caps the number of *real* API-backed predictions per day, and caches results
+# so the same matchup never re-calls the APIs. 0 = unlimited.
+DAILY_LIMIT = int(os.getenv("DAILY_PREDICTION_LIMIT", "50"))
+
+
+@st.cache_resource
+def _usage_counter() -> dict:
+    """Shared across sessions for one app instance (resets on restart)."""
+    return {"date": None, "count": 0}
+
+
+def _quota_left() -> int:
+    import datetime
+
+    today = datetime.date.today().isoformat()
+    c = _usage_counter()
+    if c["date"] != today:
+        c["date"], c["count"] = today, 0
+    return DAILY_LIMIT - c["count"] if DAILY_LIMIT > 0 else 10**9
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def cached_prediction(team_a: str, team_b: str, source: str):
+    """Cached by matchup+source. Its body runs only on a cache MISS, i.e. a
+    real API call — so that is where we increment the daily counter."""
+    c = _usage_counter()
+    c["count"] = c.get("count", 0) + 1
+    return run_prediction(team_a, team_b)
+
+
 # --------------------------------------------------------------------------- #
 # Header                                                                       #
 # --------------------------------------------------------------------------- #
@@ -259,11 +290,21 @@ predict = st.button(
     "🔮 Predict", type="primary", use_container_width=True,
     disabled=same_team or not has_groq_key,
 )
+if DAILY_LIMIT > 0:
+    st.caption(f"🎟️ Predictions left today: {max(_quota_left(), 0)} / {DAILY_LIMIT} "
+               "(repeating the same matchup is free — cached).")
 
 if predict:
+    if _quota_left() <= 0:
+        st.error(
+            f"Daily limit reached ({DAILY_LIMIT} predictions) to protect API "
+            "quota. Try again tomorrow, or rerun a matchup you already requested "
+            "(those are cached and free)."
+        )
+        st.stop()
     try:
         with st.spinner("The agent is consulting its tools and reasoning…"):
-            steps, final = run_prediction(team_a, team_b)
+            steps, final = cached_prediction(team_a, team_b, os.environ["DATA_SOURCE"])
     except Exception as exc:  # noqa: BLE001
         st.error(f"Error while running the agent: {exc}")
         st.stop()
