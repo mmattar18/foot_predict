@@ -1,5 +1,9 @@
 # ⚽ Explainable AI Football Match Predictor
 
+**🔴 Live app: https://foot-predict.streamlit.app**
+
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://foot-predict.streamlit.app/)
+
 An agent that predicts a football match result **and explains its reasoning
 step by step** (visible chain-of-thought), cross-referencing several data
 sources through *tools* — instead of spitting out a raw result.
